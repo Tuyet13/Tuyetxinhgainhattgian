@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tạo Bài Test Online</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+  body { background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; padding: 20px; }
+  .container { max-width: 800px; margin: 0 auto; }
+  .card { background: #fff; border-radius: 16px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.2); }
+  h1 { color: #fff; text-align: center; margin-bottom: 20px; }
+  h2 { color: #4a4a8a; margin-bottom: 15px; }
+  input[type=text], textarea { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 15px; margin-bottom: 10px; }
+  input:focus, textarea:focus { border-color: #667eea; outline: none; }
+  .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: .2s; }
+  .btn:hover { transform: translateY(-2px); }
+  .btn-primary { background: #667eea; color: #fff; }
+  .btn-success { background: #28a745; color: #fff; }
+  .btn-danger { background: #dc3545; color: #fff; padding: 6px 12px; font-size: 13px; }
+  .option-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .option-row input[type=radio] { width: 20px; height: 20px; cursor: pointer; }
+  .option-row input[type=text] { margin-bottom: 0; }
+  .question-item { background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 10px; border-left: 4px solid #667eea; }
+  .question-item .q-title { font-weight: bold; margin-bottom: 8px; }
+  .question-item .q-opt { padding: 3px 0 3px 15px; color: #555; }
+  .question-item .correct { color: #28a745; font-weight: bold; }
+  .link-box { background: #e8f0fe; padding: 15px; border-radius: 10px; word-break: break-all; margin: 10px 0; font-size: 14px; }
+  .hidden { display: none; }
+  /* Quiz taking */
+  .quiz-q { margin-bottom: 25px; }
+  .quiz-q .q-text { font-weight: bold; font-size: 17px; margin-bottom: 12px; color: #333; }
+  .quiz-opt { display: block; padding: 12px 15px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 8px; cursor: pointer; transition: .2s; }
+  .quiz-opt:hover { background: #f0f2ff; border-color: #667eea; }
+  .quiz-opt input { margin-right: 10px; }
+  .quiz-opt.selected { background: #e8f0fe; border-color: #667eea; }
+  .quiz-opt.right { background: #d4edda; border-color: #28a745; }
+  .quiz-opt.wrong { background: #f8d7da; border-color: #dc3545; }
+  .result-badge { font-size: 14px; font-weight: bold; margin-left: 8px; }
+  .score-box { text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-radius: 12px; margin-bottom: 20px; }
+  .score-box .score { font-size: 42px; font-weight: bold; }
+  .hint { font-size: 13px; color: #888; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📝 Bài Test Online</h1>
+
+  <!-- ========== GIAO DIỆN ADMIN ========== -->
+  <div id="adminView">
+    <div class="card">
+      <h2>⚙️ Tạo bài test (Admin)</h2>
+      <input type="text" id="quizTitle" placeholder="Tên bài test (VD: Kiểm tra Toán 15 phút)">
+    </div>
+
+    <div class="card">
+      <h2>➕ Thêm câu hỏi</h2>
+      <textarea id="qText" rows="2" placeholder="Nhập nội dung câu hỏi..."></textarea>
+      <p class="hint">Nhập các đáp án và tick vào đáp án ĐÚNG:</p>
+      <div id="optionsArea"></div>
+      <button class="btn btn-primary" style="margin-top:10px" onclick="addQuestion()">✔ Thêm câu hỏi</button>
+    </div>
+
+    <div class="card">
+      <h2>📋 Danh sách câu hỏi (<span id="qCount">0</span>)</h2>
+      <div id="questionList"><p class="hint">Chưa có câu hỏi nào.</p></div>
+      <button class="btn btn-success" style="margin-top:15px; width:100%" onclick="generateLink()">🔗 Tạo link gửi cho người làm bài</button>
+      <div id="linkArea" class="hidden">
+        <div class="link-box" id="shareLink"></div>
+        <button class="btn btn-primary" onclick="copyLink()">📋 Sao chép link</button>
+        <span id="copyMsg" style="color:#28a745; font-weight:bold; margin-left:10px"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== GIAO DIỆN NGƯỜI LÀM BÀI ========== -->
+  <div id="quizView" class="hidden">
+    <div class="card">
+      <h2 id="quizTitleShow"></h2>
+      <input type="text" id="studentName" placeholder="Nhập tên của bạn...">
+    </div>
+    <div class="card">
+      <div id="quizQuestions"></div>
+      <button class="btn btn-success" style="width:100%" id="submitBtn" onclick="submitQuiz()">📤 Nộp bài</button>
+    </div>
+    <div class="card hidden" id="resultCard">
+      <div class="score-box">
+        <div id="resultName"></div>
+        <div class="score" id="scoreText"></div>
+        <div id="scoreDetail"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let questions = [];
+
+// ===== ADMIN =====
+function renderOptionInputs() {
+  const area = document.getElementById('optionsArea');
+  area.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    area.innerHTML += `
+      <div class="option-row">
+        <input type="radio" name="correctOpt" value="${i}" ${i===0?'checked':''}>
+        <input type="text" class="optInput" placeholder="Đáp án ${String.fromCharCode(65+i)}">
+      </div>`;
+  }
+}
+
+function addQuestion() {
+  const text = document.getElementById('qText').value.trim();
+  const opts = [...document.querySelectorAll('.optInput')].map(i => i.value.trim()).filter(v => v);
+  const correct = parseInt(document.querySelector('input[name=correctOpt]:checked').value);
+
+  if (!text) return alert('Vui lòng nhập câu hỏi!');
+  if (opts.length < 2) return alert('Cần ít nhất 2 đáp án!');
+  const allOpts = [...document.querySelectorAll('.optInput')].map(i => i.value.trim());
+  if (!allOpts[correct]) return alert('Đáp án đúng đang để trống!');
+
+  questions.push({ q: text, o: allOpts.filter(v => v), c: allOpts.filter(v => v).indexOf(allOpts[correct]) });
+  document.getElementById('qText').value = '';
+  renderOptionInputs();
+  renderQuestionList();
+}
+
+function renderQuestionList() {
+  const list = document.getElementById('questionList');
+  document.getElementById('qCount').textContent = questions.length;
+  if (!questions.length) { list.innerHTML = '<p class="hint">Chưa có câu hỏi nào.</p>'; return; }
+  list.innerHTML = questions.map((q, i) => `
+    <div class="question-item">
+      <div class="q-title">Câu ${i+1}: ${esc(q.q)}
+        <button class="btn btn-danger" style="float:right" onclick="removeQ(${i})">Xóa</button>
+      </div>
+      ${q.o.map((o, j) => `<div class="q-opt ${j===q.c?'correct':''}">${String.fromCharCode(65+j)}. ${esc(o)} ${j===q.c?'✔':''}</div>`).join('')}
+    </div>`).join('');
+}
+
+function removeQ(i) { questions.splice(i, 1); renderQuestionList(); }
+
+function generateLink() {
+  if (!questions.length) return alert('Hãy thêm ít nhất 1 câu hỏi!');
+  const data = { t: document.getElementById('quizTitle').value.trim() || 'Bài test', q: questions };
+  const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
+  const link = location.origin + location.pathname + '#quiz=' + encoded;
+  document.getElementById('shareLink').textContent = link;
+  document.getElementById('linkArea').classList.remove('hidden');
+}
+
+function copyLink() {
+  navigator.clipboard.writeText(document.getElementById('shareLink').textContent).then(() => {
+    document.getElementById('copyMsg').textContent = 'Đã sao chép!';
+    setTimeout(() => document.getElementById('copyMsg').textContent = '', 2000);
+  });
+}
+
+// ===== NGƯỜI LÀM BÀI =====
+let quizData = null;
+
+function loadQuiz() {
+  const hash = location.hash;
+  if (!hash.startsWith('#quiz=')) return false;
+  try {
+    quizData = JSON.parse(decodeURIComponent(atob(hash.slice(6))));
+  } catch (e) { alert('Link bài test không hợp lệ!'); return false; }
+
+  document.getElementById('adminView').classList.add('hidden');
+  document.getElementById('quizView').classList.remove('hidden');
+  document.getElementById('quizTitleShow').textContent = '📖 ' + quizData.t;
+
+  document.getElementById('quizQuestions').innerHTML = quizData.q.map((q, i) => `
+    <div class="quiz-q" id="q${i}">
+      <div class="q-text">Câu ${i+1}: ${esc(q.q)}</div>
+      ${q.o.map((o, j) => `
+        <label class="quiz-opt" id="q${i}o${j}">
+          <input type="radio" name="q${i}" value="${j}" onchange="selectOpt(${i},${j})">
+          ${String.fromCharCode(65+j)}. ${esc(o)}
+        </label>`).join('')}
+    </div>`).join('');
+  return true;
+}
+
+function selectOpt(i, j) {
+  quizData.q[i].o.forEach((_, k) => document.getElementById(`q${i}o${k}`).classList.remove('selected'));
+  document.getElementById(`q${i}o${j}`).classList.add('selected');
+}
+
+function submitQuiz() {
+  const name = document.getElementById('studentName').value.trim();
+  if (!name) return alert('Vui lòng nhập tên của bạn!');
+
+  let answered = quizData.q.every((_, i) => document.querySelector(`input[name=q${i}]:checked`));
+  if (!answered && !confirm('Bạn chưa trả lời hết các câu hỏi. Vẫn nộp bài?')) return;
+
+  let score = 0;
+  quizData.q.forEach((q, i) => {
+    const chosen = document.querySelector(`input[name=q${i}]:checked`);
+    const chosenVal = chosen ? parseInt(chosen.value) : -1;
+
+    q.o.forEach((_, j) => {
+      const el = document.getElementById(`q${i}o${j}`);
+      el.style.pointerEvents = 'none';
+      if (j === q.c) {
+        el.classList.add('right');
+        el.innerHTML += '<span class="result-badge" style="color:#28a745">✔ Đáp án đúng</span>';
+      }
+      if (j === chosenVal && chosenVal !== q.c) {
+        el.classList.add('wrong');
+        el.innerHTML += '<span class="result-badge" style="color:#dc3545">✘ Bạn chọn sai</span>';
+      }
+    });
+    if (chosenVal === q.c) score++;
+  });
+
+  document.getElementById('submitBtn').classList.add('hidden');
+  document.getElementById('resultCard').classList.remove('hidden');
+  document.getElementById('resultName').textContent = '👤 ' + name;
+  document.getElementById('scoreText').textContent = score + ' / ' + quizData.q.length;
+  const pct = Math.round(score / quizData.q.length * 100);
+  document.getElementById('scoreDetail').textContent =
+    pct >= 80 ? `🎉 Xuất sắc! (${pct}%)` : pct >= 50 ? `👍 Khá tốt! (${pct}%)` : `💪 Cố gắng hơn nhé! (${pct}%)`;
+  document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// Khởi động
+if (!loadQuiz()) renderOptionInputs();
+window.addEventListener('hashchange', () => location.reload());
+</script>
+</body>
+</html>
